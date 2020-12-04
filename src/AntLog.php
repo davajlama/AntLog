@@ -56,12 +56,13 @@ class AntLog
     {
         $self = self::create();
 
-        $record = new Record();
-        $record->query      = $query;
-        $record->time       = $time;
-        $record->runner     = $self->getRunner();
-        $record->session    = $self->getSession();
-        $record->api        = $self->getUrl();
+        $record = new Record((object)[
+            'query'     => $query,
+            'time'      => $time,
+            'runner'    => $self->getRunner(),
+            'session'   => $self->getSession(),
+            'api'       => $self->getUrl(),
+        ]);
 
         $self->getSqlLogger()->log($record);
     }

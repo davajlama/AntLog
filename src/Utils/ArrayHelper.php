@@ -1,16 +1,31 @@
 <?php
 
-
 namespace Davajlama\AntLog\Utils;
 
-
-use Exception;
 use Traversable;
 
 class ArrayHelper implements \ArrayAccess, \IteratorAggregate
 {
     /** @var array */
     private $list = [];
+
+    /**
+     * ArrayHelper constructor.
+     * @param array $list
+     */
+    public function __construct(array $list = [])
+    {
+        $this->list = $list;
+    }
+
+    /**
+     * @param callable $callback
+     * @return ArrayHelper
+     */
+    public function filter(callable $callback)
+    {
+        return new self(array_filter($this->list, $callback));
+    }
 
     /**
      * @param ArrayHelper $array

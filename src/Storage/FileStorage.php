@@ -33,16 +33,17 @@ class FileStorage implements StorageInterface
     public function store($type, $runner, array $data)
     {
         $filename = $this->createFileName($type, $runner);
-        file_put_contents($filename, json_encode($data) . self::SEPARATOR, FILE_APPEND);
+        file_put_contents($this->tempDir . '/' . $filename, json_encode($data) . self::SEPARATOR, FILE_APPEND);
     }
 
     /**
+     * @param string $type
      * @return ArrayHelper
      */
-    public function load()
+    public function load($type)
     {
         $list = new ArrayHelper();
-        foreach($this->findFiles() as $file) {
+        foreach($this->findFiles($type) as $file) {
             $list->append($this->loadFile($file));
         }
 
@@ -60,11 +61,12 @@ class FileStorage implements StorageInterface
     }
 
     /**
+     * @param string $type
      * @return array|false
      */
-    protected function findFiles()
+    protected function findFiles($type)
     {
-        return glob($this->tempDir . '/*.antlog');
+        return glob($this->tempDir . "/$type.*.antlog");
     }
 
     protected function loadFile($file)

@@ -16,5 +16,9 @@
 
     "autoload-dev": {
         "classmap": ["tests/"]
-    }
+    },
+
+    "bin": [
+        "bin/antlog"
+    ]
 }
