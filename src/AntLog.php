@@ -1,140 +1,122 @@
 <?php
 
-namespace Davajlama;
+namespace Davajlama\AntLog;
+
+use Davajlama\AntLog\Sql\Logger;
+use Davajlama\AntLog\Sql\Record;
+use Davajlama\AntLog\Storage\StorageInterface;
 
 class AntLog
 {
-    const FILE      = 'query-log.log';
-    const DELIMETER = '<<|CDATA|DELIMETER>>';
-
     /** @var AntLog */
-    private static AntLog $self;
+    private static $self;
+
+    /** @var StorageInterface */
+    private $storage;
 
     /** @var string */
-    private static string $tempDir;
+    private $session;
 
     /** @var string */
-    private static string $session;
+    private $runner;
 
     /** @var string */
-    private static string $runner;
+    private $url;
 
-    /** @var string */
-    private static string $url;
+    /** @var Logger */
+    private $sqlLogger;
 
     /**
-     * SqlLogger constructor.
-     * @param string $temp
+     * AntLog constructor.
+     * @param StorageInterface $storage
      */
-    public function __construct($tempDir = null)
+    protected function __construct(StorageInterface $storage)
     {
-        if(!isset(self::$tempDir)) {
-            if(!is_dir($tempDir)) {
-                throw new \Exception("Temp path [$tempDir] not exists");
-            }
-
-            self::$tempDir = $tempDir;
-        }
+        $this->storage = $storage;
     }
 
     /**
-     * @param string|null $tempDir
+     * @param StorageInterface|null $storage
      * @return AntLog
-     * @throws \Exception
      */
-    public static function create(string $tempDir = null) : AntLog
+    public static function create(StorageInterface $storage = null)
     {
         if(!isset(self::$self)) {
-            self::$self = new self($tempDir);
+            self::$self = new self($storage);
         }
 
         return self::$self;
     }
 
-
-    public static function logSql(string $sql, $time, string $session = null, string $runner = null, string $url = null) : void
+    /**
+     * @param string $query
+     * @param float|int $time
+     */
+    public static function logSql($query, $time)
     {
-        $session    = $session ? $session : self::getSession();
-        $runner     = $runner ? $runner : self::getRunner();
-        $url        = $url ? $url : self::getUrl();
+        $self = self::create();
 
-        self::create()->log($sql, $time, $session, $runner, $url);
+        $record = new Record();
+        $record->query      = $query;
+        $record->time       = $time;
+        $record->runner     = $self->getRunner();
+        $record->session    = $self->getSession();
+        $record->api        = $self->getUrl();
+
+        $self->getSqlLogger()->log($record);
+    }
+
+    /**
+     * @return Logger
+     */
+    public function getSqlLogger()
+    {
+        if($this->sqlLogger === null) {
+            $this->sqlLogger = new Logger($this->storage);
+        }
+
+        return $this->sqlLogger;
     }
 
     /**
      * @return string
      */
-    protected static function getSession() : string
+    protected function getSession()
     {
-        if(!isset(self::$session)) {
-            self::$session = PHP_SAPI === 'cli' ? 'cli' : md5(session_id());
+        if(!isset($this->session)) {
+            $this->session = PHP_SAPI === 'cli' ? 'cli' : md5(session_id());
         }
 
-        return self::$session;
+        return $this->session;
     }
 
     /**
      * @return string
      */
-    protected static function getRunner() : string
+    protected function getRunner()
     {
-        if(!isset(self::$runner)) {
-            self::$runner = uniqid();
+        if(!isset($this->runner)) {
+            $this->runner = uniqid();
         }
 
-        return self::$runner;
+        return $this->runner;
     }
 
     /**
      * @return string
      */
-    protected static function getUrl() : string
+    protected function getUrl()
     {
-        if(!isset(self::$url)) {
-            self::$url = PHP_SAPI === 'cli' ? 'cli' : $_SERVER['QUERY_STRING'];
+        if(!isset($this->url)) {
+            $this->url = PHP_SAPI === 'cli' ? 'cli' : $_SERVER['QUERY_STRING'];
         }
 
-        return self::$url;
-    }
-
-    protected function log(string $query, $time, string $session = null, string $runner = null, string $url = null)
-    {
-        $this->write(json_encode((object)[
-            'query'     => $query,
-            'time'      => $time,
-            'session'   => $session,
-            'runner'    => $runner,
-            'url'       => $url,
-        ]));
+        return $this->url;
     }
 
     protected function round($number)
     {
         return round($number, 4);
-    }
-
-    protected function write($string)
-    {
-        $data = $string . self::DELIMETER;
-        file_put_contents(self::$tempDir . '/' . self::FILE, $data, FILE_APPEND);
-    }
-
-    protected function parse()
-    {
-        static $list;
-
-        if(empty($list)) {
-            $data = file_get_contents(self::$tempDir. '/' . self::FILE);
-            $list = [];
-
-            foreach(explode(self::DELIMETER, $data) as $json) {
-                if($obj = json_decode($json)) {
-                    $list[] = $obj;
-                }
-            }
-        }
-
-        return $list;
     }
 
     public function stats()
@@ -287,130 +269,4 @@ class AntLog
 
         $this->writeBreak();
     }
-
-    public function format($query)
-    {
-        $pattern = '~\n~';
-        $query = preg_replace($pattern, ' ', $query);
-
-        $pattern = '~\s+~';
-        $query = preg_replace($pattern, ' ', $query);
-
-        return $query;
-    }
-
-    public function replace($query)
-    {
-        $pattern = '~(["\'])(?:[^\1\\\\]|\\\\.)*?\1~';
-        $query = preg_replace($pattern, '@value', $query);
-
-        $pattern = '~([\s]|[=])\d+~';
-        $query = preg_replace($pattern, '\1@value', $query);
-        return $query;
-    }
-
-    public function test()
-    {
-        $query  = "SELECT * FROM `users` WHERE name = 'david'";
-        $expect = "SELECT * FROM `users` WHERE name = @value";
-        $this->_test($expect, $this->replace($query));
-
-        $query  = "SELECT * FROM `users` WHERE name = ''";
-        $expect = "SELECT * FROM `users` WHERE name = @value";
-        $this->_test($expect, $this->replace($query));
-
-        $query  = 'SELECT * FROM `users` WHERE name = "david"';
-        $expect = "SELECT * FROM `users` WHERE name = @value";
-        $this->_test($expect, $this->replace($query));
-
-        $query  = 'SELECT * FROM `users` WHERE name = ""';
-        $expect = "SELECT * FROM `users` WHERE name = @value";
-        $this->_test($expect, $this->replace($query));
-
-        $query  = 'SELECT * FROM `users` WHERE name = "Teste escaped \" double quotes"';
-        $expect = "SELECT * FROM `users` WHERE name = @value";
-        $this->_test($expect, $this->replace($query));
-
-        $query  = "SELECT * FROM `users` WHERE name = 'Teste escaped \' double quotes'";
-        $expect = "SELECT * FROM `users` WHERE name = @value";
-        $this->_test($expect, $this->replace($query));
-
-        $query  = "SELECT * FROM `users` WHERE name = 123";
-        $expect = "SELECT * FROM `users` WHERE name = @value";
-        $this->_test($expect, $this->replace($query));
-
-        $query  = "SELECT * FROM `users` WHERE name2 = 123";
-        $expect = "SELECT * FROM `users` WHERE name2 = @value";
-        $this->_test($expect, $this->replace($query));
-
-        $query  = "SELECT * FROM `users` WHERE name2=123";
-        $expect = "SELECT * FROM `users` WHERE name2=@value";
-        $this->_test($expect, $this->replace($query));
-
-    }
-
-    public function _test($expect, $query)
-    {
-        if($expect !== $query) {
-            echo 'ERROR: ' . $query . PHP_EOL;
-        }
-    }
 }
-
-class TextColor
-{
-    private static $fgColors = [
-        'black' => '0;30',
-        'green' => '0;32',
-        'red'   => '0;31',
-        'white' => '1;37',
-        'yellow' => '1;33',
-    ];
-
-    private static $bgColors = [
-        'black' => '40',
-        'green' => '42'
-    ];
-
-    public static function colorize($string, $fg = null, $bg = null)
-    {
-        $result = '';
-
-        if($fg && array_key_exists($fg, self::$fgColors)) {
-            $result .= "\033[" . self::$fgColors[$fg] . 'm';
-        }
-
-        if($bg && array_key_exists($bg, self::$bgColors)) {
-            $result .= "\033[" . self::$bgColors[$bg] . 'm';
-        }
-
-        if($result) {
-            $result .= $string . "\033[0m";
-        } else {
-            $result = $string;
-        }
-
-        return $result;
-    }
-}
-
-function aaamquery($q, $ignoreErrors = false) {
-    require_once __DIR__ . '/../../SqlLogger.php';
-    $logger = new SqlLogger(__DIR__ . '/../../var/temp');
-    return $logger->run(function() use($q, $ignoreErrors, $logger){
-
-        $logger->start();
-
-        $result = _mquery($q, $ignoreErrors);
-
-        $logger->log($q);
-
-        return $result;
-    });
-}
-
-//PerformanceLogger::formatter('sql', SqlFormatter::create());
-//PerforamnceLogger::logSql();
-//PerformanceLogger::log()->run();
-
-//retrun $this->log($query)->run(['callback', [$q, $ignoreErrors]]);
