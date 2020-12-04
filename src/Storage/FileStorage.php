@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Davajlama\AntLog\Storage;
 
 class FileStorage implements StorageInterface

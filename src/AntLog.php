@@ -4,6 +4,7 @@ namespace Davajlama\AntLog;
 
 use Davajlama\AntLog\Sql\Logger;
 use Davajlama\AntLog\Sql\Record;
+use Davajlama\AntLog\Sql\Viewer;
 use Davajlama\AntLog\Storage\StorageInterface;
 
 class AntLog
@@ -65,6 +66,17 @@ class AntLog
         ]);
 
         $self->getSqlLogger()->log($record);
+    }
+
+    public function view($filter)
+    {
+         $viewer = new Viewer($this->storage);
+
+         if($filter) {
+             $viewer->filterByRunner($filter);
+         }
+
+         $viewer->view();
     }
 
     /**

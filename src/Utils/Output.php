@@ -31,7 +31,7 @@ class Output
      * @param $text
      * @return $this
      */
-    private function writeLine($text)
+    public function writeLine($text)
     {
         $this->write($text)->writeBreak();
         return $this;

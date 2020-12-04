@@ -6,6 +6,7 @@ namespace Davajlama\AntLog\Sql;
 
 use Davajlama\AntLog\Storage\StorageInterface;
 use Davajlama\AntLog\Utils\ArrayHelper;
+use Davajlama\AntLog\Utils\Colorizer;
 use Davajlama\AntLog\Utils\Output;
 
 class Viewer
@@ -19,6 +20,9 @@ class Viewer
     /** @var Output */
     private $output;
 
+    /** @var Colorizer */
+    private $colorizer;
+
     /**
      * Viewer constructor.
      * @param StorageInterface $storage
@@ -28,8 +32,20 @@ class Viewer
         $this->storage = $storage;
     }
 
-    public function fullPrint()
+    public function view()
     {
+        $this->viewStats();
+    }
+
+    public function viewStats()
+    {
+        $list = $this->load();
+        
+        $output = $this->getOutput();
+        $output->writeHeadline("STATS");
+
+        $output->writeLine("Queries count: " . $this->getColorizer()->green($list->count()));
+
 
     }
 
@@ -39,6 +55,7 @@ class Viewer
      */
     public function filterByRunner($runner)
     {
+        $this->load();
         $this->list = $this->list->filter(function(Record $record) use($runner){
             return $record->runner === $runner;
         });
@@ -59,6 +76,18 @@ class Viewer
         }
 
         return $this->list;
+    }
+
+    /**
+     * @return Colorizer
+     */
+    public function getColorizer()
+    {
+        if($this->colorizer === null) {
+            $this->colorizer = new Colorizer();
+        }
+
+        return $this->colorizer;
     }
 
     /**

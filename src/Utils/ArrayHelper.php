@@ -28,6 +28,14 @@ class ArrayHelper implements \ArrayAccess, \IteratorAggregate
     }
 
     /**
+     * @return int
+     */
+    public function count()
+    {
+        return count($this->list);
+    }
+
+    /**
      * @param ArrayHelper $array
      * @return $this
      */
