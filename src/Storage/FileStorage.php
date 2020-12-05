@@ -65,9 +65,13 @@ class FileStorage implements StorageInterface
      * @param string $type
      * @return array|false
      */
-    protected function findFiles($type)
+    protected function findFiles($type = null)
     {
-        return glob($this->tempDir . "/$type.*.antlog");
+        if($type) {
+            return glob($this->tempDir . "/$type.*.antlog");
+        }
+
+        return glob($this->tempDir . "/*.antlog");
     }
 
     protected function loadFile($file)

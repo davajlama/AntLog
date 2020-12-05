@@ -6,6 +6,7 @@ use Davajlama\AntLog\Sql\Logger;
 use Davajlama\AntLog\Sql\Record;
 use Davajlama\AntLog\Sql\Viewer;
 use Davajlama\AntLog\Storage\StorageInterface;
+use Davajlama\AntLog\Utils\BlindColorizer;
 
 class AntLog
 {
@@ -70,13 +71,13 @@ class AntLog
 
     public function view($filter)
     {
-         $viewer = new Viewer($this->storage);
+        $viewer = new Viewer($this->storage);
 
-         if($filter) {
-             $viewer->filterByRunner($filter);
-         }
+        if($filter) {
+            $viewer->filterByRunner($filter);
+        }
 
-         $viewer->view();
+        $viewer->view();
     }
 
     /**
@@ -121,7 +122,8 @@ class AntLog
     protected function getUrl()
     {
         if(!isset($this->url)) {
-            $this->url = PHP_SAPI === 'cli' ? 'cli' : $_SERVER['QUERY_STRING'];
+            //var_dump($_SERVER);exit;
+            $this->url = PHP_SAPI === 'cli' ? 'cli' : $_SERVER['REQUEST_URI'];
         }
 
         return $this->url;

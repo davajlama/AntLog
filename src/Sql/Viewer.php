@@ -87,9 +87,11 @@ class Viewer
                     'runner'    => $item->runner,
                     'api'       => $item->api,
                     'time'      => 0,
+                    'count'     => 0,
                 ];
             }
 
+            $aggregated[$item->runner]->count++;
             $aggregated[$item->runner]->time += $item->time;
         }
         
@@ -97,9 +99,10 @@ class Viewer
         foreach($aggregated as $item) {
             $time   = $this->round($item->time);
             $runner = $item->runner;
-            $api    = rawurldecode($item->api);
+            $api    = $this->getColorizer()->yellow(rawurldecode($item->api));
+            $count  = $item->count;
 
-            $output->writeLine($this->getColorizer()->red($time . 's') . ' ' . $runner . ' ' . $api);
+            $output->writeLine($this->getColorizer()->red($time . 's / ' . $count . 'q') . ' ' . $runner . ' ' . $api);
         }
     }
 
@@ -212,6 +215,16 @@ class Viewer
         }
 
         return $this->colorizer;
+    }
+
+    /**
+     * @param Colorizer $colorizer
+     * @return $this
+     */
+    public function setColorizer(Colorizer $colorizer)
+    {
+        $this->colorizer = $colorizer;
+        return $this;
     }
 
     /**
