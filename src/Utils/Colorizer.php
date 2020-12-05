@@ -12,6 +12,7 @@ class Colorizer
         'red'   => '0;31',
         'white' => '1;37',
         'yellow' => '1;33',
+        'magenta' => '1;35',
     ];
 
     private static $bgColors = [
@@ -55,4 +56,39 @@ class Colorizer
         return $this->colorize($string, 'green');
     }
 
+    /**
+     * @param string $string
+     * @return string
+     */
+    public function red($string)
+    {
+        return $this->colorize($string, 'red');
+    }
+
+    /**
+     * @param string $string
+     * @return string
+     */
+    public function white($string)
+    {
+        return $this->colorize($string, 'white');
+    }
+
+    /**
+     * @param $string
+     * @return string
+     */
+    public function yellow($string)
+    {
+        return $this->colorize($string, 'yellow');
+    }
+
+    /**
+     * @param string $string
+     * @return string
+     */
+    public function magenta($string)
+    {
+        return $this->colorize($string, 'magenta');
+    }
 }

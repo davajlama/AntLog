@@ -6,13 +6,17 @@ namespace Davajlama\AntLog\Utils;
 
 class Output
 {
+    /** @var Colorizer */
+    private $colorizer;
+
     /**
      * @param $text
      * @return $this
      */
     public function writeHeadline($text)
     {
-        $this->writeLine(sprintf('====================%s====================', $text))
+        $this->writeBreak()
+                ->writeLine($this->getColorizer()->magenta(sprintf('==================  %s  ==================', $text)))
                 ->writeBreak();
 
         return $this;
@@ -45,5 +49,17 @@ class Output
     {
         echo $text;
         return $this;
+    }
+
+    /**
+     * @return Colorizer
+     */
+    protected function getColorizer()
+    {
+        if($this->colorizer === null) {
+            $this->colorizer = new Colorizer();
+        }
+
+        return $this->colorizer;
     }
 }

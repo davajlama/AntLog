@@ -25,6 +25,6 @@ class Logger
      */
     public function log(Record $record)
     {
-        $this->storage->store($record->type, $record->runner, $record->toArray());
+        $this->storage->store($record->type, $record->session, $record->toArray());
     }
 }

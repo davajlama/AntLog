@@ -19,12 +19,60 @@ class ArrayHelper implements \ArrayAccess, \IteratorAggregate
     }
 
     /**
+     * @param int $count
+     * @return ArrayHelper
+     */
+    public function part($count)
+    {
+        return new self(array_slice($this->list, 0, $count));
+    }
+
+    /**
+     * @param callable $callback
+     * @return ArrayHelper
+     */
+    public function sort(callable $callback)
+    {
+        $list = $this->list;
+        usort($list, $callback);
+        return new self($list);
+    }
+
+    /**
+     * @param string $column
+     * @return ArrayHelper
+     */
+    public function sortDesc($column)
+    {
+        return $this->sort(function($a, $b) use($column){
+            return $a->$column < $b->$column;
+        });
+    }
+
+    /**
      * @param callable $callback
      * @return ArrayHelper
      */
     public function filter(callable $callback)
     {
         return new self(array_filter($this->list, $callback));
+    }
+
+    /**
+     * @param callable $callback
+     * @return ArrayHelper
+     */
+    public function map(callable $callback)
+    {
+        return new self(array_map($callback, $this->list));
+    }
+
+    /**
+     * @return ArrayHelper
+     */
+    public function unique()
+    {
+        return new self(array_unique($this->list));
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace Davajlama\AntLog\Storage;
 
+use Davajlama\AntLog\Utils\ArrayHelper;
+
 class FileStorage implements StorageInterface
 {
     /** @var string */
@@ -26,12 +28,12 @@ class FileStorage implements StorageInterface
 
     /**
      * @param string $type
-     * @param string $runner
+     * @param string $session
      * @param array $data
      */
-    public function store($type, $runner, array $data)
+    public function store($type, $session, array $data)
     {
-        $filename = $this->createFileName($type, $runner);
+        $filename = $this->createFileName($type, $session);
         file_put_contents($this->tempDir . '/' . $filename, json_encode($data) . self::SEPARATOR, FILE_APPEND);
     }
 
@@ -75,7 +77,7 @@ class FileStorage implements StorageInterface
         $list = new ArrayHelper();
         foreach(explode(self::SEPARATOR, $content) as $json) {
             if($json) {
-                $list[] = json_decode($json);
+                $list[] = $obj = json_decode($json);
             }
         }
 
@@ -87,9 +89,9 @@ class FileStorage implements StorageInterface
      * @param string $runner
      * @return string
      */
-    public function createFileName($type, $runner)
+    public function createFileName($type, $session)
     {
         $date = date("Ymd");
-        return sprintf("%s.%s.%s.antlog", $type, $runner, $date);
+        return sprintf("%s.%s.%s.antlog", $type, $session, $date);
     }
 }
