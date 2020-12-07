@@ -11,7 +11,7 @@ use Davajlama\AntLog\Utils\Output;
 
 class Viewer
 {
-    const COUNT = 5;
+    const COUNT = 10;
 
     /** @var StorageInterface */
     private $storage;
@@ -145,9 +145,10 @@ class Viewer
         $output = $this->getOutput();
         $output->writeHeadline('TOP SAME QUERIES by time');
         
-        $sorted = $aggregated->sortDesc('time');
+        $sorted = $aggregated->sortDesc('time')->part(self::COUNT);
         foreach($sorted as $item) {
-            $output->write($this->getColorizer()->red($this->round($item->time). 's') . ' : ')
+            $header = $this->getColorizer()->red($this->round($item->time). 's' . ' / ' . $item->count . 'x');
+            $output->write($header . ' : ')
                         ->write($item->query)
                         ->writeBreak()
                         ->writeBreak();
@@ -156,9 +157,10 @@ class Viewer
 
         $output->writeHeadline('TOP SAME QUERIES by count');
 
-        $sorted = $aggregated->sortDesc('count');
+        $sorted = $aggregated->sortDesc('count')->part(self::COUNT);
         foreach($sorted as $item) {
-            $output->write($this->getColorizer()->red($item->count . 'x') . ' : ')
+            $header = $item->count . 'x / ' . $this->round($item->time) . 's';
+            $output->write($this->getColorizer()->red($header) . ' : ')
                 ->write($item->query)
                 ->writeBreak()
                 ->writeBreak();
