@@ -11,7 +11,7 @@ class FileStorageTest extends \BaseTestCase
 
     public function testCreateFilename()
     {
-        $storage = new FileStorage(__DIR__ . '/../../Fixtures/temp');
+        $storage = new FileStorage(__DIR__ . '/../../../Fixtures/temp');
 
         $type   = 'sql';
         $runner = 'ab1231';
